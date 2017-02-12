@@ -24,9 +24,34 @@
   m_sum_sqr::Vector{Float64} = Vector{Float64}()
 )
 
-function ModelInit(model::FMmodel)
+function InitModel(model::FMmodel)
   model.w = zeros(Float64, model.num_attribute)
   model.v = zeros(Float64, (model.num_factor, model.num_attribute))
   model.m_sum = zeros(Float64, model.num_factor)
   model.m_sum_sqr = zeros(Float64, model.num_factor)
+end
+
+
+function SaveModel(model::FMmodel, file::String)
+  checkPath(file)
+  open(file, "w+") do io
+    write(io, "FMmodel\n")
+    for field in fieldnames(model)
+      writeKV(io, string(field), getfield(model, field))
+    end
+  end
+end
+
+function LoadModel(file::String)
+  checkPath(file)
+  isfile(file) || error(file * " does not exist")
+  open(file, "r") do io
+    ftype = readline(io)
+    @assert(ftype == "FMmodel\n", "the file read in is not a FMmodel output")
+    for line in eachline(io)
+      key, value = readKV(line)
+      set(model, convert(String, key), value)
+    end
+  end
+  return model
 end

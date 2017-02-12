@@ -1,14 +1,18 @@
-function write_key_value(io::IOStream, key::String, value::Union{String, Number})
-  write(io, string(key, "~", string(typeof(value)), "@"))
-  writedlm(io, value, ',')
-end
 
-function write_key_value(io::IOStream, key::String, value::Array)
-  dims = string(size(value))
-  type_ = string(typeof(value))
-  if ndims(value) > 1
-    value = reshape(value, (1, length(value)))
-  end
-  write(io, string(join([key, type_, dims], "~"), "@"))
-  writedlm(io, value, ',')
+
+
+
+
+
+
+
+toString(x ::Real)                                                     = string(typeof(x), "(", isa(x, Bool) ? Int(x) : x, ")")
+toString(x ::String)                                                   = string(typeof(x), "(\"", x, "\")")
+toString(x ::Array)                                                    = isempty(x) ? string(x) : string(eltype(x), x)
+toData(s   ::String)                                                   = eval(parse(s))
+writeKV(io::IOStream, key::String, value::Union{Real, String, Array}) = write(io, key * "@" * toString(value) * "\n")
+readKV(text::String) = begin
+  key, value = split(text, '@')
+  String(key), eval(parse(value[1:end-1]))
 end
+checkPath(path::String) = isabspath(path) || !('/' in path || '\\' in path) || error(path * "'s format is error")
