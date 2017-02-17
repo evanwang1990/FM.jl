@@ -55,3 +55,25 @@ function LoadModel(file::String)
   end
   return model
 end
+
+function predict(model::FMmodel, vec::SparseVector)
+  pred::Float64 = 0.0
+  model.k0 && pred += model.w0
+  model.m_sum = zeros(model.m_sum)
+  model.m_sum_sqr = zeros(model.m_sum_sqr)
+
+  for (_idx, _val) in zip(vec.nzind, vec.nzval):
+    model.k1 &&　pred += model.w[_idx] * _val
+    for i in 1:model.num_factor
+      _tmp = model.v[i, _idx] * _val
+      model.m_sum[i] += _tmp
+      model.m_sum_sqr[i] += _tmp^2
+    end
+  end
+
+  for i in 1:model.num_factor
+    pred += 0.5 * (model.m_sum[i] ^ 2 - model.m_sum_sqr[i])
+  end
+
+  return pred
+end
